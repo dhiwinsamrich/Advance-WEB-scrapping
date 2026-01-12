@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Environments
+venv/
+env/
+ENV/
+
+# Logs
+logs/
+*.log
+scraper.log
+crawler.log
+errors.log
+
+# Config
+.env
+.env.local
+
+# Docker
+.dockerignore
