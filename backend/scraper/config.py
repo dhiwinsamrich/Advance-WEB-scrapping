@@ -12,9 +12,9 @@ class Config:
     HEADLESS_MODE = os.getenv("HEADLESS_MODE", "True").lower() in ("true", "1", "t")
     
     # Timeouts
-    PAGE_LOAD_TIMEOUT = int(os.getenv("PAGE_LOAD_TIMEOUT", 30))
-    SCRIPT_TIMEOUT = int(os.getenv("SCRIPT_TIMEOUT", 30))
-    IMPLICIT_WAIT = int(os.getenv("IMPLICIT_WAIT", 10))
+    PAGE_LOAD_TIMEOUT = int(os.getenv("PAGE_LOAD_TIMEOUT", 60))
+    SCRIPT_TIMEOUT = int(os.getenv("SCRIPT_TIMEOUT", 60))
+    IMPLICIT_WAIT = int(os.getenv("IMPLICIT_WAIT", 15))
     
     # Logging
     LOG_LEVEL = getattr(logging, os.getenv("LOG_LEVEL", "INFO").upper(), logging.INFO)

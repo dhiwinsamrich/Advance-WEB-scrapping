@@ -233,3 +233,19 @@
 {"timestamp": "2026-01-12T17:01:29.234016", "level": "INFO", "message": "Processing: https://tulsisilks.co.in/blogs/should-you-wear-a-black-saree-to-a-wedding-style-alternatives-what-to-choose-instead (Depth: 1)", "module": "crawler"}
 {"timestamp": "2026-01-12T17:01:31.934445", "level": "INFO", "message": "Closing WebDriver...", "module": "crawler"}
 {"timestamp": "2026-01-12T17:01:48.224506", "level": "INFO", "message": "Crawl finished.", "module": "crawler"}
+{"timestamp": "2026-01-27T11:49:16.880495", "level": "INFO", "message": "Configuration validated.", "module": "main"}
+{"timestamp": "2026-01-27T11:49:27.405021", "level": "ERROR", "message": "Failed to create driver: Could not reach host. Are you offline?", "module": "driver_manager"}
+{"timestamp": "2026-01-27T11:49:27.416384", "level": "INFO", "message": "Starting crawl on https://tulsisilks.co.in/ with max_depth=1", "module": "crawler"}
+{"timestamp": "2026-01-27T11:49:27.417904", "level": "INFO", "message": "Processing: https://tulsisilks.co.in/ (Depth: 0)", "module": "crawler"}
+{"timestamp": "2026-01-27T11:49:29.979264", "level": "INFO", "message": "Crawl finished.", "module": "crawler"}
+{"timestamp": "2026-01-27T11:54:51.023585", "level": "INFO", "message": "Starting crawl on https://tulsisilks.co.in/category/uppada-silk with max_depth=1", "module": "crawler"}
+{"timestamp": "2026-01-27T11:54:51.025096", "level": "INFO", "message": "Processing: https://tulsisilks.co.in/category/uppada-silk (Depth: 0)", "module": "crawler"}
+{"timestamp": "2026-01-27T11:55:22.448533", "level": "INFO", "message": "Retrying with Selenium: https://tulsisilks.co.in/category/uppada-silk", "module": "crawler"}
+{"timestamp": "2026-01-27T11:55:52.467137", "level": "INFO", "message": "Closing WebDriver...", "module": "crawler"}
+{"timestamp": "2026-01-27T11:55:54.643133", "level": "INFO", "message": "Crawl finished.", "module": "crawler"}
+{"timestamp": "2026-01-27T11:58:00.345810", "level": "INFO", "message": "Starting crawl on https://tulsisilks.co.in/category/uppada-silk with max_depth=1", "module": "crawler"}
+{"timestamp": "2026-01-27T11:58:00.347000", "level": "INFO", "message": "Processing: https://tulsisilks.co.in/category/uppada-silk (Depth: 0)", "module": "crawler"}
+{"timestamp": "2026-01-27T11:58:50.871055", "level": "INFO", "message": "Processing: https://tulsisilks.co.in/category/black-georgette-sarees (Depth: 1)", "module": "crawler"}
+{"timestamp": "2026-01-27T11:59:35.358010", "level": "INFO", "message": "Processing: https://tulsisilks.co.in/category/linen-embroidery (Depth: 1)", "module": "crawler"}
+{"timestamp": "2026-01-27T12:00:19.394349", "level": "INFO", "message": "Processing: https://tulsisilks.co.in/category/black-kanjivaram-silk-sarees (Depth: 1)", "module": "crawler"}
+{"timestamp": "2026-01-27T12:01:00.674709", "level": "INFO", "message": "Processing: https://tulsisilks.co.in/category/cutwork-organza-sarees (Depth: 1)", "module": "crawler"}
