@@ -7,12 +7,22 @@ from scraper.crawler import Crawler
 from scraper.logger import get_logger
 import os
 
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
 app = FastAPI()
 
-# Allow CORS for frontend
+# Allow CORS - Restricted Origins
+origins = [
+    "https://advance-web-scrapping.vercel.app",
+    # "http://localhost:3000" # Keep for local development
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -8,6 +8,17 @@ import { Input } from "@/components/ui/input"
 import { Terminal, Play, Square, Globe, Download, Pause, Activity, Layers, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
 
+// Helper to determine API Base URL
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+
+// Helper to determine WebSocket URL
+const getWebSocketUrl = () => {
+    if (API_BASE_URL.startsWith("https")) {
+        return API_BASE_URL.replace("https", "wss") + "/logs"
+    }
+    return API_BASE_URL.replace("http", "ws") + "/logs"
+}
+
 export default function Dashboard() {
     const [url, setUrl] = useState("")
     const [maxDepth, setMaxDepth] = useState(1)
@@ -23,7 +34,8 @@ export default function Dashboard() {
 
     // WebSocket Connection
     useEffect(() => {
-        const ws = new WebSocket("ws://localhost:8000/logs")
+        const wsUrl = getWebSocketUrl()
+        const ws = new WebSocket(wsUrl)
 
         ws.onopen = () => {
             setIsConnected(true)
@@ -52,7 +64,7 @@ export default function Dashboard() {
         if (!url) return
         setIsRunning(true)
         try {
-            const res = await fetch("http://localhost:8000/start", {
+            const res = await fetch(`${API_BASE_URL}/start`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ url, max_depth: maxDepth }),
@@ -67,7 +79,7 @@ export default function Dashboard() {
 
     const handleStop = async () => {
         try {
-            await fetch("http://localhost:8000/stop", { method: "POST" })
+            await fetch(`${API_BASE_URL}/stop`, { method: "POST" })
             setIsRunning(false)
         } catch (e) {
             console.error(e)
@@ -75,7 +87,7 @@ export default function Dashboard() {
     }
 
     const handleDownload = () => {
-        window.open("http://localhost:8000/download", "_blank")
+        window.open(`${API_BASE_URL}/download`, "_blank")
     }
 
     // Parse logs for display
