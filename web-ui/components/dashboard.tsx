@@ -2,10 +2,11 @@
 
 import * as React from "react"
 import { useState, useEffect, useRef } from "react"
+import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Terminal, Play, Square, Globe, Download, Pause, Activity, Layers, Clock } from "lucide-react"
+import { Terminal, Play, Square, Globe, Download, Activity, Layers, Clock, Eye, ChevronRight, ChevronDown, Copy, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 // Helper to determine API Base URL
@@ -19,6 +20,79 @@ const getWebSocketUrl = () => {
     return API_BASE_URL.replace("http", "ws") + "/logs"
 }
 
+// JSON Tree Viewer Component
+interface JsonNodeProps {
+    keyName: string
+    value: unknown
+    depth: number
+}
+
+const JsonNode: React.FC<JsonNodeProps> = ({ keyName, value, depth }) => {
+    const [isExpanded, setIsExpanded] = useState(depth < 2)
+    const [copied, setCopied] = useState(false)
+
+    const handleCopy = (text: string) => {
+        navigator.clipboard.writeText(text)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 1500)
+    }
+
+    const isObject = value !== null && typeof value === 'object'
+    const isArray = Array.isArray(value)
+    const isEmpty = isObject && Object.keys(value as object).length === 0
+
+    const getValueColor = () => {
+        if (typeof value === 'string') return 'text-emerald-400'
+        if (typeof value === 'number') return 'text-amber-400'
+        if (typeof value === 'boolean') return 'text-purple-400'
+        if (value === null) return 'text-zinc-500'
+        return 'text-zinc-300'
+    }
+
+    if (!isObject) {
+        return (
+            <div className="flex items-center gap-2 py-0.5 group" style={{ paddingLeft: `${depth * 16}px` }}>
+                <span className="text-blue-400 font-medium">{keyName}:</span>
+                <span className={cn("font-mono", getValueColor())}>
+                    {typeof value === 'string' ? `"${value}"` : String(value)}
+                </span>
+                <button
+                    onClick={() => handleCopy(String(value))}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-zinc-700 rounded"
+                >
+                    {copied ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3 text-zinc-400" />}
+                </button>
+            </div>
+        )
+    }
+
+    const entries = Object.entries(value as object)
+
+    return (
+        <div style={{ paddingLeft: `${depth * 16}px` }}>
+            <div
+                className="flex items-center gap-1 py-0.5 cursor-pointer hover:bg-zinc-800/50 rounded"
+                onClick={() => setIsExpanded(!isExpanded)}
+            >
+                {isEmpty ? (
+                    <span className="w-4" />
+                ) : isExpanded ? (
+                    <ChevronDown className="h-4 w-4 text-zinc-500" />
+                ) : (
+                    <ChevronRight className="h-4 w-4 text-zinc-500" />
+                )}
+                <span className="text-blue-400 font-medium">{keyName}</span>
+                <span className="text-zinc-500 text-xs">
+                    {isArray ? `[${entries.length}]` : `{${entries.length}}`}
+                </span>
+            </div>
+            {isExpanded && entries.map(([k, v]) => (
+                <JsonNode key={k} keyName={k} value={v} depth={depth + 1} />
+            ))}
+        </div>
+    )
+}
+
 export default function Dashboard() {
     const [url, setUrl] = useState("")
     const [maxDepth, setMaxDepth] = useState(1)
@@ -26,11 +100,41 @@ export default function Dashboard() {
     const [isRunning, setIsRunning] = useState(false)
     const [isConnected, setIsConnected] = useState(false)
     const [mounted, setMounted] = useState(false)
+    const [jsonData, setJsonData] = useState<unknown>(null)
+    const [showJsonViewer, setShowJsonViewer] = useState(false)
+    const [isLoadingJson, setIsLoadingJson] = useState(false)
     const scrollRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
         setMounted(true)
     }, [])
+
+    // Status Polling - Check if scraping has finished
+    useEffect(() => {
+        if (!isRunning) return
+
+        const pollStatus = async () => {
+            try {
+                const res = await fetch(`${API_BASE_URL}/status`)
+                if (res.ok) {
+                    const data = await res.json()
+                    if (!data.is_running) {
+                        setIsRunning(false)
+                        setLogs(prev => [...prev, JSON.stringify({
+                            timestamp: new Date().toISOString(),
+                            level: "SYSTEM",
+                            message: "Scraping completed!"
+                        })])
+                    }
+                }
+            } catch (e) {
+                console.error("Status poll failed:", e)
+            }
+        }
+
+        const interval = setInterval(pollStatus, 3000)
+        return () => clearInterval(interval)
+    }, [isRunning])
 
     // WebSocket Connection
     useEffect(() => {
@@ -100,6 +204,31 @@ export default function Dashboard() {
         window.open(`${API_BASE_URL}/download`, "_blank")
     }
 
+    const handleViewData = async () => {
+        setIsLoadingJson(true)
+        try {
+            const res = await fetch(`${API_BASE_URL}/download`)
+            if (res.ok) {
+                const text = await res.text()
+                // Parse line by line since log file has JSON per line
+                const lines = text.trim().split('\n').filter(Boolean)
+                const parsed = lines.map(line => {
+                    try {
+                        return JSON.parse(line)
+                    } catch {
+                        return { raw: line }
+                    }
+                })
+                setJsonData(parsed)
+                setShowJsonViewer(true)
+            }
+        } catch (e) {
+            console.error("Failed to fetch JSON:", e)
+        } finally {
+            setIsLoadingJson(false)
+        }
+    }
+
     // Parse logs for display
     const parsedLogs = logs.map(logStr => {
         try {
@@ -115,18 +244,37 @@ export default function Dashboard() {
         <div className="min-h-screen bg-background text-foreground selection:bg-zinc-200 selection:text-black">
             {/* Top Navigation / Header */}
             <header className="sticky top-0 z-10 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                <div className="container flex h-16 items-center justify-between mx-auto px-4 max-w-7xl">
+                <div className="container flex h-16 items-center mx-auto px-4 max-w-7xl relative">
+                    {/* Left: Logo */}
                     <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 bg-foreground rounded-lg flex items-center justify-center">
-                            <Activity className="h-5 w-5 text-background" />
-                        </div>
+                        <Image
+                            src="/icon.png"
+                            alt="Web Scraper Logo"
+                            width={36}
+                            height={36}
+                            className="rounded-full object-cover border-2 border-foreground/20"
+                        />
                         <div>
                             <h1 className="text-lg font-bold tracking-tight">Anti-Fail WebScraper</h1>
                             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Production Ready</p>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    {/* Center: Docs Link */}
+                    <div className="absolute left-1/2 -translate-x-1/2">
+                        <a
+                            href="/docs"
+                            className="text-sm font-semibold px-4 py-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+                        >
+                            📚 Documentation
+                        </a>
+                    </div>
+
+                    {/* Right: Creator + Status */}
+                    <div className="flex items-center gap-4 ml-auto">
+                        <span className="text-xs text-muted-foreground hidden sm:block">
+                            by <span className="font-semibold text-foreground">Dhiwin Samrich</span>
+                        </span>
                         <div className="flex items-center gap-2 px-3 py-1 rounded-full border bg-muted/50">
                             <div className={cn("h-2 w-2 rounded-full animate-pulse", isConnected ? "bg-emerald-500" : "bg-rose-500")} />
                             <span className="text-xs font-medium text-muted-foreground">
@@ -191,6 +339,9 @@ export default function Dashboard() {
                                 )}
                                 <Button variant="outline" className="w-full h-10" onClick={handleDownload} disabled={logs.length === 0}>
                                     <Download className="mr-2 h-4 w-4" /> Download JSON Artifacts
+                                </Button>
+                                <Button variant="secondary" className="w-full h-10" onClick={handleViewData} disabled={logs.length === 0 || isLoadingJson}>
+                                    <Eye className="mr-2 h-4 w-4" /> {isLoadingJson ? "Loading..." : "View Scraped Data"}
                                 </Button>
                             </CardFooter>
                         </Card>
@@ -268,6 +419,30 @@ export default function Dashboard() {
                     </div>
                 </div>
             </main>
+
+            {/* JSON Viewer Modal */}
+            {showJsonViewer && (
+                <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setShowJsonViewer(false)}>
+                    <div
+                        className="bg-zinc-900 border border-zinc-700 rounded-lg w-full max-w-4xl max-h-[80vh] overflow-hidden flex flex-col"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-700">
+                            <h3 className="text-lg font-semibold text-zinc-100">Scraped Data Viewer</h3>
+                            <Button variant="ghost" size="sm" onClick={() => setShowJsonViewer(false)}>
+                                ✕
+                            </Button>
+                        </div>
+                        <div className="flex-1 overflow-auto p-4 font-mono text-sm">
+                            {jsonData && Array.isArray(jsonData) ? (
+                                <JsonNode keyName="data" value={jsonData} depth={0} />
+                            ) : (
+                                <p className="text-zinc-500">No data available</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

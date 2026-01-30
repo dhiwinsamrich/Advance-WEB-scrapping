@@ -38,6 +38,41 @@ class Crawler:
         """Signals the crawler to stop processing the queue."""
         self._stop_event = True
 
+    def _content_needs_javascript(self, content):
+        """
+        Detect if the scraped content suggests JavaScript is required.
+        Returns True if dynamic scraping should be used.
+        """
+        if not content:
+            return False
+        
+        # Check text content for common JS-required indicators
+        text_content = content.get("text_content", "").lower()
+        indicators = [
+            "you need to enable javascript",
+            "javascript is required",
+            "please enable javascript",
+            "this app requires javascript",
+            "javascript to run this app",
+            "enable javascript to view",
+            "javascript must be enabled",
+        ]
+        
+        for indicator in indicators:
+            if indicator in text_content:
+                logger.info(f"Detected JS-required indicator: '{indicator}'")
+                return True
+        
+        # Also check if content is suspiciously empty (common in SPAs)
+        paragraphs = content.get("paragraphs", [])
+        headings = content.get("headings", {})
+        total_headings = sum(len(h) for h in headings.values()) if headings else 0
+        
+        if len(paragraphs) == 0 and total_headings == 0 and len(text_content.strip()) < 100:
+            logger.info("Detected minimal content - likely a JS-rendered page")
+            return True
+        
+        return False
 
     def start(self):
         logger.info(f"Starting crawl on {self.base_url} with max_depth={self.max_depth}")
@@ -74,8 +109,9 @@ class Crawler:
                 
                 content, links = self.scraper.scrape_url(current_url)
                 
-                # If static failed or returned empty, maybe try dynamic?
-                if not content and self.driver:
+                # If static failed, returned empty, or content indicates JS is required, try dynamic
+                needs_js = self._content_needs_javascript(content)
+                if (not content or needs_js) and self.driver:
                     logger.info(f"Retrying with Selenium: {current_url}")
                     content, links = self.scraper.scrape_dynamic(current_url, self.driver)
 

@@ -78,18 +78,23 @@ class Scraper:
             
         try:
             logger.info(f"Scraping dynamic: {url}")
+            logger.info("Navigating to URL...")
             driver.get(url)
+            logger.info("Navigation complete. Waiting for body element...")
             
             # Wait for body
             WebDriverWait(driver, Config.PAGE_LOAD_TIMEOUT).until(
                 EC.presence_of_element_located((By.TAG_NAME, "body"))
             )
+            logger.info("Body element found. Performing auto-scroll...")
             
             # Auto-scroll to trigger lazy loading
             self.auto_scroll(driver)
+            logger.info("Auto-scroll complete. Extracting page source...")
             
             html = driver.page_source
             content = parse_html(html, url)
+            logger.info(f"Content extracted successfully from {url}")
             return asdict(content), content.links
             
         except TimeoutException:
