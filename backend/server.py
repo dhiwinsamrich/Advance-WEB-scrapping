@@ -17,7 +17,7 @@ app = FastAPI()
 # Allow CORS - Restricted Origins
 origins = [
     "https://advance-web-scrapping.vercel.app",
-    # "http://localhost:3000" # Keep for local development
+    "http://localhost:3000"  # Keep for local development
 ]
 
 app.add_middleware(
