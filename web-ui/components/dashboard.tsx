@@ -35,18 +35,28 @@ export default function Dashboard() {
     // WebSocket Connection
     useEffect(() => {
         const wsUrl = getWebSocketUrl()
+        console.log("Attempting WebSocket connection to:", wsUrl) // Debug log
         const ws = new WebSocket(wsUrl)
 
         ws.onopen = () => {
+            console.log("WebSocket Connected")
             setIsConnected(true)
             setLogs((prev) => [...prev, JSON.stringify({ timestamp: new Date().toISOString(), level: "SYSTEM", message: "Connected to log stream..." })])
+        }
+
+        ws.onerror = (error) => {
+            console.error("WebSocket Error:", error)
+            setLogs((prev) => [...prev, JSON.stringify({ timestamp: new Date().toISOString(), level: "ERROR", message: `Connection failed to ${wsUrl}` })])
         }
 
         ws.onmessage = (event) => {
             setLogs((prev) => [...prev, event.data])
         }
 
-        ws.onclose = () => setIsConnected(false)
+        ws.onclose = () => {
+            console.log("WebSocket Closed")
+            setIsConnected(false)
+        }
 
         return () => {
             ws.close()
