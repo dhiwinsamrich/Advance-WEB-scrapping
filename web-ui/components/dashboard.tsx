@@ -181,7 +181,7 @@ export default function Dashboard() {
                             </CardContent>
                             <CardFooter className="flex flex-col gap-3 pt-2">
                                 {!isRunning ? (
-                                    <Button className="w-full h-10 font-semibold" onClick={handleStart} disabled={!url || !isConnected}>
+                                    <Button className="w-full h-10 font-semibold" onClick={handleStart} disabled={!url}>
                                         <Play className="mr-2 h-4 w-4 fill-current" /> Start Extraction
                                     </Button>
                                 ) : (
