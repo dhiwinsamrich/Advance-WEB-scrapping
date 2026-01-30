@@ -13,3 +13,6 @@ logs/
 errors.log
 crawler.log
 scraper.log
+backend/logs/
+
+Local_Run.txt
