@@ -6,7 +6,7 @@ import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Terminal, Play, Square, Globe, Download, Activity, Layers, Clock, Eye, ChevronRight, ChevronDown, Copy, Check } from "lucide-react"
+import { Terminal, Play, Square, Globe, Download, Activity, Layers, Clock, Eye, ChevronRight, ChevronDown, Copy, Check, Link2, ImageIcon, ExternalLink } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 // Helper to determine API Base URL
@@ -51,7 +51,7 @@ const JsonNode: React.FC<JsonNodeProps> = ({ keyName, value, depth }) => {
 
     if (!isObject) {
         return (
-            <div className="flex items-center gap-2 py-0.5 group" style={{ paddingLeft: `${depth * 16}px` }}>
+            <div className={`flex items-center gap-2 py-0.5 group pl-[${depth * 16}px]`}>
                 <span className="text-blue-400 font-medium">{keyName}:</span>
                 <span className={cn("font-mono", getValueColor())}>
                     {typeof value === 'string' ? `"${value}"` : String(value)}
@@ -69,7 +69,7 @@ const JsonNode: React.FC<JsonNodeProps> = ({ keyName, value, depth }) => {
     const entries = Object.entries(value as object)
 
     return (
-        <div style={{ paddingLeft: `${depth * 16}px` }}>
+        <div className={`pl-[${depth * 16}px]`}>
             <div
                 className="flex items-center gap-1 py-0.5 cursor-pointer hover:bg-zinc-800/50 rounded"
                 onClick={() => setIsExpanded(!isExpanded)}
@@ -89,6 +89,270 @@ const JsonNode: React.FC<JsonNodeProps> = ({ keyName, value, depth }) => {
             {isExpanded && entries.map(([k, v]) => (
                 <JsonNode key={k} keyName={k} value={v} depth={depth + 1} />
             ))}
+        </div>
+    )
+}
+
+// Scraped Data Viewer with Tabs
+interface ScrapedDataViewerProps {
+    jsonData: unknown
+    onClose: () => void
+}
+
+type TabType = 'all' | 'images' | 'links'
+
+interface ImageData {
+    src: string
+    alt: string
+    pageUrl?: string
+}
+
+interface ExtractedData {
+    images: ImageData[]
+    links: { url: string; pageUrl: string }[]
+}
+
+const ScrapedDataViewer: React.FC<ScrapedDataViewerProps> = ({ jsonData, onClose }) => {
+    const [activeTab, setActiveTab] = useState<TabType>('all')
+    const [copiedUrl, setCopiedUrl] = useState<string | null>(null)
+
+    const handleCopy = (url: string) => {
+        navigator.clipboard.writeText(url)
+        setCopiedUrl(url)
+        setTimeout(() => setCopiedUrl(null), 1500)
+    }
+
+    // Extract images and links from the data
+    const extractData = (data: unknown): ExtractedData => {
+        const images: ImageData[] = []
+        const links: { url: string; pageUrl: string }[] = []
+        const seenImages = new Set<string>()
+        const seenLinks = new Set<string>()
+
+        const processEntry = (entry: Record<string, unknown>) => {
+            const pageUrl = (entry.url as string) || ''
+            const entryData = entry.data as Record<string, unknown> | undefined
+
+            // Extract images
+            if (entryData?.images && Array.isArray(entryData.images)) {
+                for (const img of entryData.images) {
+                    const imgObj = img as { src?: string; alt?: string }
+                    if (imgObj.src && !seenImages.has(imgObj.src)) {
+                        seenImages.add(imgObj.src)
+                        images.push({
+                            src: imgObj.src,
+                            alt: imgObj.alt || '',
+                            pageUrl
+                        })
+                    }
+                }
+            }
+
+            // Extract links
+            if (entryData?.links && Array.isArray(entryData.links)) {
+                for (const link of entryData.links) {
+                    const linkStr = link as string
+                    if (linkStr && !seenLinks.has(linkStr)) {
+                        seenLinks.add(linkStr)
+                        links.push({ url: linkStr, pageUrl })
+                    }
+                }
+            }
+        }
+
+        if (Array.isArray(data)) {
+            for (const item of data) {
+                if (item && typeof item === 'object') {
+                    processEntry(item as Record<string, unknown>)
+                }
+            }
+        }
+
+        return { images, links }
+    }
+
+    const { images, links } = extractData(jsonData)
+
+    const tabs = [
+        { id: 'all' as TabType, label: 'All Data', icon: Eye, count: null },
+        { id: 'images' as TabType, label: 'Images', icon: ImageIcon, count: images.length },
+        { id: 'links' as TabType, label: 'Links', icon: Link2, count: links.length },
+    ]
+
+    return (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={onClose}>
+            <div
+                className="bg-zinc-900 border border-zinc-700 rounded-lg w-full max-w-5xl max-h-[85vh] overflow-hidden flex flex-col"
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-700 bg-zinc-900/95">
+                    <h3 className="text-lg font-semibold text-zinc-100">Scraped Data Viewer</h3>
+                    <Button variant="ghost" size="sm" onClick={onClose}>
+                        ✕
+                    </Button>
+                </div>
+
+                {/* Tabs */}
+                <div className="flex border-b border-zinc-700 bg-zinc-900/50 px-2">
+                    {tabs.map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={cn(
+                                "flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-[2px]",
+                                activeTab === tab.id
+                                    ? "text-emerald-400 border-emerald-400"
+                                    : "text-zinc-400 border-transparent hover:text-zinc-200 hover:border-zinc-500"
+                            )}
+                        >
+                            <tab.icon className="h-4 w-4" />
+                            {tab.label}
+                            {tab.count !== null && (
+                                <span className={cn(
+                                    "px-2 py-0.5 rounded-full text-xs font-semibold",
+                                    activeTab === tab.id ? "bg-emerald-400/20 text-emerald-400" : "bg-zinc-700 text-zinc-400"
+                                )}>
+                                    {tab.count}
+                                </span>
+                            )}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 overflow-auto p-4">
+                    {/* All Data Tab */}
+                    {activeTab === 'all' && (
+                        <div className="font-mono text-sm">
+                            {jsonData && Array.isArray(jsonData) ? (
+                                <JsonNode keyName="data" value={jsonData} depth={0} />
+                            ) : (
+                                <p className="text-zinc-500">No data available</p>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Images Tab */}
+                    {activeTab === 'images' && (
+                        <div className="space-y-4">
+                            {images.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-12 text-zinc-500">
+                                    <ImageIcon className="h-12 w-12 mb-3 opacity-50" />
+                                    <p>No images found in scraped data</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                    {images.map((img, i) => (
+                                        <div key={i} className="group bg-zinc-800 rounded-lg overflow-hidden border border-zinc-700 hover:border-zinc-500 transition-colors">
+                                            <div className="aspect-video bg-zinc-950 flex items-center justify-center overflow-hidden">
+                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                <img
+                                                    src={img.src}
+                                                    alt={img.alt || 'Scraped image'}
+                                                    className="object-contain w-full h-full"
+                                                    onError={(e) => {
+                                                        (e.target as HTMLImageElement).style.display = 'none'
+                                                        const parent = (e.target as HTMLImageElement).parentElement
+                                                        if (parent) {
+                                                            parent.innerHTML = '<div class="flex flex-col items-center text-zinc-600"><svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg><span class="text-xs mt-1">Failed</span></div>'
+                                                        }
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="p-2 space-y-1">
+                                                {img.alt && (
+                                                    <p className="text-xs text-zinc-300 truncate" title={img.alt}>
+                                                        {img.alt}
+                                                    </p>
+                                                )}
+                                                <div className="flex items-center gap-1">
+                                                    <p className="text-xs text-zinc-500 truncate flex-1" title={img.src}>
+                                                        {img.src}
+                                                    </p>
+                                                    <button
+                                                        onClick={() => handleCopy(img.src)}
+                                                        className="p-1 hover:bg-zinc-700 rounded shrink-0"
+                                                    >
+                                                        {copiedUrl === img.src ? (
+                                                            <Check className="h-3 w-3 text-emerald-400" />
+                                                        ) : (
+                                                            <Copy className="h-3 w-3 text-zinc-400" />
+                                                        )}
+                                                    </button>
+                                                    <a
+                                                        href={img.src}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="p-1 hover:bg-zinc-700 rounded shrink-0"
+                                                        title="Open image in new tab"
+                                                    >
+                                                        <ExternalLink className="h-3 w-3 text-zinc-400" />
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Links Tab */}
+                    {activeTab === 'links' && (
+                        <div className="space-y-1">
+                            {links.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-12 text-zinc-500">
+                                    <Link2 className="h-12 w-12 mb-3 opacity-50" />
+                                    <p>No links found in scraped data</p>
+                                </div>
+                            ) : (
+                                <div className="bg-zinc-800/50 rounded-lg border border-zinc-700 divide-y divide-zinc-700/50">
+                                    {links.map((link, i) => (
+                                        <div key={i} className="flex items-center gap-3 px-4 py-2 hover:bg-zinc-800 transition-colors group">
+                                            <Link2 className="h-4 w-4 text-zinc-500 shrink-0" />
+                                            <a
+                                                href={link.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex-1 text-sm text-blue-400 hover:text-blue-300 truncate"
+                                                title={link.url}
+                                            >
+                                                {link.url}
+                                            </a>
+                                            <button
+                                                onClick={() => handleCopy(link.url)}
+                                                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-zinc-700 rounded transition-opacity"
+                                            >
+                                                {copiedUrl === link.url ? (
+                                                    <Check className="h-3 w-3 text-emerald-400" />
+                                                ) : (
+                                                    <Copy className="h-3 w-3 text-zinc-400" />
+                                                )}
+                                            </button>
+                                            <a
+                                                href={link.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-zinc-700 rounded transition-opacity"
+                                                title="Open link in new tab"
+                                            >
+                                                <ExternalLink className="h-3 w-3 text-zinc-400" />
+                                            </a>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Footer Stats */}
+                <div className="flex items-center justify-between px-4 py-2 border-t border-zinc-700 bg-zinc-900/95 text-xs text-zinc-500">
+                    <span>Total: {Array.isArray(jsonData) ? jsonData.length : 0} pages scraped</span>
+                    <span>{images.length} images • {links.length} links</span>
+                </div>
+            </div>
         </div>
     )
 }
@@ -420,28 +684,12 @@ export default function Dashboard() {
                 </div>
             </main>
 
-            {/* JSON Viewer Modal */}
+            {/* JSON Viewer Modal with Tabs */}
             {showJsonViewer && (
-                <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setShowJsonViewer(false)}>
-                    <div
-                        className="bg-zinc-900 border border-zinc-700 rounded-lg w-full max-w-4xl max-h-[80vh] overflow-hidden flex flex-col"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-700">
-                            <h3 className="text-lg font-semibold text-zinc-100">Scraped Data Viewer</h3>
-                            <Button variant="ghost" size="sm" onClick={() => setShowJsonViewer(false)}>
-                                ✕
-                            </Button>
-                        </div>
-                        <div className="flex-1 overflow-auto p-4 font-mono text-sm">
-                            {jsonData && Array.isArray(jsonData) ? (
-                                <JsonNode keyName="data" value={jsonData} depth={0} />
-                            ) : (
-                                <p className="text-zinc-500">No data available</p>
-                            )}
-                        </div>
-                    </div>
-                </div>
+                <ScrapedDataViewer
+                    jsonData={jsonData}
+                    onClose={() => setShowJsonViewer(false)}
+                />
             )}
         </div>
     )
