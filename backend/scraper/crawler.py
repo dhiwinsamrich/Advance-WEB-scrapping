@@ -132,6 +132,7 @@ class Crawler:
                                 if norm_link and norm_link not in self.visited:
                                     self.queue.append((link, depth + 1))
                 else:
+                    scraper_logger.warning(f"No content extracted for {current_url}", extra={"url": current_url})
                     err_logger.warning(f"No content extracted for {current_url}")
 
         except KeyboardInterrupt:

@@ -98,9 +98,11 @@ class Scraper:
             return asdict(content), content.links
             
         except TimeoutException:
+            logger.warning(f"Timeout waiting for page load: {url}")
             error_logger.error(f"Timeout waiting for page load: {url}")
             return None, []
         except Exception as e:
+            logger.warning(f"Selenium error on {url}: {e}")
             error_logger.exception(f"Selenium error on {url}: {e}")
             return None, []
 
