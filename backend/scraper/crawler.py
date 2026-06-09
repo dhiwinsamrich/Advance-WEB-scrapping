@@ -22,15 +22,11 @@ class Crawler:
         # Initialize components
         # We share one driver instance for the lifecycle of the crawler if needed
         # Or create it on demand. For efficiency in recursive crawls, keeping it open is better.
-        self.driver = None 
-        if Config.HEADLESS_MODE or True: # Force init of driver if we expect dynamic pages
-             # Or we can lazy load it in Scraper. Let's manage it here to close it properly.
-             try:
-                 self.driver = create_driver()
-             except Exception as e:
-                 err_logger.critical(f"Could not initialize driver: {e}")
-                 # Continue? Maybe static only.
-                 pass
+        self.driver = None
+        try:
+            self.driver = create_driver()
+        except Exception as e:
+            err_logger.warning(f"Could not initialize Selenium driver — will use static-only scraping: {e}")
         
         self.scraper = Scraper(driver_manager=None)
 
