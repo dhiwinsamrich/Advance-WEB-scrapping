@@ -68,13 +68,13 @@ interface AuditReport {
 // ── Orphan reason metadata ────────────────────────────────────────────────────
 
 const REASON_META: Record<string, { label: string; color: string; bg: string }> = {
-    JS_RENDERED:   { label: "JS Rendered",   color: "text-blue-700 dark:text-blue-300",   bg: "bg-blue-100 dark:bg-blue-500/20 border-blue-300 dark:border-blue-400/30" },
-    NOT_FOUND:     { label: "404 Not Found", color: "text-rose-700 dark:text-rose-300",   bg: "bg-rose-100 dark:bg-rose-500/20 border-rose-300 dark:border-rose-400/30" },
-    REDIRECT:      { label: "Redirect",      color: "text-amber-700 dark:text-amber-300", bg: "bg-amber-100 dark:bg-amber-500/20 border-amber-300 dark:border-amber-400/30" },
-    SERVER_ERROR:  { label: "Server Error",  color: "text-red-700 dark:text-red-300",     bg: "bg-red-100 dark:bg-red-500/20 border-red-300 dark:border-red-400/30" },
-    ACCESS_DENIED: { label: "403/401",       color: "text-orange-700 dark:text-orange-300", bg: "bg-orange-100 dark:bg-orange-500/20 border-orange-300 dark:border-orange-400/30" },
-    FETCH_ERROR:   { label: "Fetch Error",   color: "text-zinc-600 dark:text-zinc-400",   bg: "bg-zinc-100 dark:bg-zinc-700/40 border-zinc-300 dark:border-zinc-600" },
-    NOT_LINKED:    { label: "Not Linked",    color: "text-purple-700 dark:text-purple-300", bg: "bg-purple-100 dark:bg-purple-500/20 border-purple-300 dark:border-purple-400/30" },
+    JS_RENDERED:   { label: "JS Rendered",   color: "text-blue-900 dark:text-blue-200",     bg: "bg-blue-100 dark:bg-blue-500/20 border-blue-400 dark:border-blue-400/30" },
+    NOT_FOUND:     { label: "404 Not Found", color: "text-rose-900 dark:text-rose-200",     bg: "bg-rose-100 dark:bg-rose-500/20 border-rose-400 dark:border-rose-400/30" },
+    REDIRECT:      { label: "Redirect",      color: "text-amber-900 dark:text-amber-200",   bg: "bg-amber-100 dark:bg-amber-500/20 border-amber-400 dark:border-amber-400/30" },
+    SERVER_ERROR:  { label: "Server Error",  color: "text-red-900 dark:text-red-200",       bg: "bg-red-100 dark:bg-red-500/20 border-red-400 dark:border-red-400/30" },
+    ACCESS_DENIED: { label: "403/401",       color: "text-orange-900 dark:text-orange-200", bg: "bg-orange-100 dark:bg-orange-500/20 border-orange-400 dark:border-orange-400/30" },
+    FETCH_ERROR:   { label: "Fetch Error",   color: "text-zinc-800 dark:text-zinc-300",     bg: "bg-zinc-200 dark:bg-zinc-700/40 border-zinc-400 dark:border-zinc-600" },
+    NOT_LINKED:    { label: "Not Linked",    color: "text-purple-900 dark:text-purple-200", bg: "bg-purple-100 dark:bg-purple-500/20 border-purple-400 dark:border-purple-400/30" },
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -241,14 +241,14 @@ const InsightsPanel: React.FC<{ insights: string[] }> = ({ insights }) => {
     if (!insights || insights.length === 0) return null
     return (
         <div className="rounded-lg border border-blue-200 dark:border-blue-400/30 bg-blue-50 dark:bg-blue-500/5 p-4 space-y-2">
-            <h4 className="text-sm font-semibold text-blue-700 dark:text-blue-300 flex items-center gap-2">
+            <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300 flex items-center gap-2">
                 <Lightbulb className="h-4 w-4" />
                 Insights
             </h4>
             <ul className="space-y-2">
                 {insights.map((insight, i) => (
-                    <li key={i} className="flex items-start gap-2 text-xs text-blue-800 dark:text-blue-200">
-                        <span className="shrink-0 mt-0.5 font-bold text-blue-400 dark:text-blue-500">›</span>
+                    <li key={i} className="flex items-start gap-2 text-xs text-gray-900 dark:text-blue-100">
+                        <span className="shrink-0 mt-0.5 font-bold text-blue-600 dark:text-blue-400">›</span>
                         <span>{insight}</span>
                     </li>
                 ))}
@@ -680,18 +680,13 @@ export default function AuditPanel() {
                                 defaultOpen={missingPages.length > 0}
                             />
 
-                            {/* Non-page files — shown separately with lower severity */}
-                            {nonPageFiles.length > 0 && (
-                                <div className="rounded-lg border border-border overflow-hidden opacity-70">
-                                    <div className="flex items-center gap-2 px-4 py-3 bg-muted text-xs text-muted-foreground">
-                                        <FileX2 className="h-3.5 w-3.5 shrink-0" />
-                                        <span>
-                                            <span className="font-semibold text-foreground">{nonPageFiles.length}</span>{" "}
-                                            non-page file(s) found by crawler — ignored (not expected in sitemap)
-                                        </span>
-                                    </div>
-                                </div>
-                            )}
+                            {/* Non-page files — expandable list */}
+                            <ExpandableList
+                                title="Non-Page Files (found by crawler, not expected in sitemap)"
+                                items={nonPageFiles}
+                                colorClass="text-zinc-600 dark:text-zinc-400"
+                                defaultOpen={false}
+                            />
 
                             {/* Orphan list with reason badges */}
                             <OrphanList
