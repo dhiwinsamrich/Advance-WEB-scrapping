@@ -67,14 +67,14 @@ interface AuditReport {
 
 // ── Orphan reason metadata ────────────────────────────────────────────────────
 
-const REASON_META: Record<string, { label: string; color: string; bg: string }> = {
-    JS_RENDERED:   { label: "JS Rendered",   color: "text-blue-900 dark:text-blue-200",     bg: "bg-blue-100 dark:bg-blue-500/20 border-blue-400 dark:border-blue-400/30" },
-    NOT_FOUND:     { label: "404 Not Found", color: "text-rose-900 dark:text-rose-200",     bg: "bg-rose-100 dark:bg-rose-500/20 border-rose-400 dark:border-rose-400/30" },
-    REDIRECT:      { label: "Redirect",      color: "text-amber-900 dark:text-amber-200",   bg: "bg-amber-100 dark:bg-amber-500/20 border-amber-400 dark:border-amber-400/30" },
-    SERVER_ERROR:  { label: "Server Error",  color: "text-red-900 dark:text-red-200",       bg: "bg-red-100 dark:bg-red-500/20 border-red-400 dark:border-red-400/30" },
-    ACCESS_DENIED: { label: "403/401",       color: "text-orange-900 dark:text-orange-200", bg: "bg-orange-100 dark:bg-orange-500/20 border-orange-400 dark:border-orange-400/30" },
-    FETCH_ERROR:   { label: "Fetch Error",   color: "text-zinc-800 dark:text-zinc-300",     bg: "bg-zinc-200 dark:bg-zinc-700/40 border-zinc-400 dark:border-zinc-600" },
-    NOT_LINKED:    { label: "Not Linked",    color: "text-purple-900 dark:text-purple-200", bg: "bg-purple-100 dark:bg-purple-500/20 border-purple-400 dark:border-purple-400/30" },
+const REASON_META: Record<string, { label: string; style: React.CSSProperties }> = {
+    JS_RENDERED:   { label: "JS Rendered",   style: { background: "#bfdbfe", color: "#000", borderColor: "#60a5fa" } },
+    NOT_FOUND:     { label: "404 Not Found", style: { background: "#fecaca", color: "#000", borderColor: "#f87171" } },
+    REDIRECT:      { label: "Redirect",      style: { background: "#fde68a", color: "#000", borderColor: "#fbbf24" } },
+    SERVER_ERROR:  { label: "Server Error",  style: { background: "#fca5a5", color: "#000", borderColor: "#f87171" } },
+    ACCESS_DENIED: { label: "403/401",       style: { background: "#fed7aa", color: "#000", borderColor: "#fb923c" } },
+    FETCH_ERROR:   { label: "Fetch Error",   style: { background: "#e4e4e7", color: "#000", borderColor: "#a1a1aa" } },
+    NOT_LINKED:    { label: "Not Linked",    style: { background: "#e9d5ff", color: "#000", borderColor: "#c084fc" } },
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -180,10 +180,10 @@ const OrphanList: React.FC<{
                         const meta = REASON_META[d.reason] ?? REASON_META.FETCH_ERROR
                         return (
                             <div key={i} className="flex items-center gap-3 px-4 py-2 hover:bg-muted/50">
-                                <span className={cn(
-                                    "shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded border",
-                                    meta.color, meta.bg,
-                                )}>
+                                <span
+                                    className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded border"
+                                    style={meta.style}
+                                >
                                     {meta.label}
                                 </span>
                                 <a
