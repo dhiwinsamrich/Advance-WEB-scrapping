@@ -1,0 +1,46 @@
+📦backend
+ ┣ 📂logs
+ ┃ ┣ 📜crawler.log
+ ┃ ┣ 📜errors.log
+ ┃ ┣ 📜scraper.log
+ ┃ ┗ 📜scrape_f20d9df2.log
+ ┣ 📂scraper
+ ┃ ┣ 📂__pycache__
+ ┃ ┃ ┣ 📜config.cpython-310.pyc
+ ┃ ┃ ┣ 📜config.cpython-313.pyc
+ ┃ ┃ ┣ 📜crawler.cpython-310.pyc
+ ┃ ┃ ┣ 📜crawler.cpython-313.pyc
+ ┃ ┃ ┣ 📜driver_manager.cpython-310.pyc
+ ┃ ┃ ┣ 📜driver_manager.cpython-313.pyc
+ ┃ ┃ ┣ 📜logger.cpython-310.pyc
+ ┃ ┃ ┣ 📜logger.cpython-313.pyc
+ ┃ ┃ ┣ 📜main.cpython-310.pyc
+ ┃ ┃ ┣ 📜main.cpython-313.pyc
+ ┃ ┃ ┣ 📜parser.cpython-310.pyc
+ ┃ ┃ ┣ 📜parser.cpython-313.pyc
+ ┃ ┃ ┣ 📜scraper.cpython-310.pyc
+ ┃ ┃ ┣ 📜scraper.cpython-313.pyc
+ ┃ ┃ ┣ 📜utils.cpython-310.pyc
+ ┃ ┃ ┣ 📜utils.cpython-313.pyc
+ ┃ ┃ ┣ 📜__init__.cpython-310.pyc
+ ┃ ┃ ┗ 📜__init__.cpython-313.pyc
+ ┃ ┣ 📜config.py
+ ┃ ┣ 📜crawler.py
+ ┃ ┣ 📜driver_manager.py
+ ┃ ┣ 📜logger.py
+ ┃ ┣ 📜main.py
+ ┃ ┣ 📜parser.py
+ ┃ ┣ 📜scraper.py
+ ┃ ┣ 📜utils.py
+ ┃ ┗ 📜__init__.py
+ ┣ 📂__pycache__
+ ┃ ┣ 📜server.cpython-310.pyc
+ ┃ ┗ 📜server.cpython-313.pyc
+ ┣ 📜.env
+ ┣ 📜.env.example
+ ┣ 📜.gitignore
+ ┣ 📜Dockerfile
+ ┣ 📜Explanation.md
+ ┣ 📜Procfile
+ ┣ 📜requirements.txt
+ ┗ 📜server.py
