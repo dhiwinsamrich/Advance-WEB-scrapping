@@ -6,8 +6,9 @@ import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Terminal, Play, Square, Globe, Download, Activity, Layers, Clock, Eye, ChevronRight, ChevronDown, Copy, Check, Link2, ImageIcon, ExternalLink } from "lucide-react"
+import { Terminal, Play, Square, Globe, Download, Activity, Layers, Clock, Eye, ChevronRight, ChevronDown, Copy, Check, Link2, ImageIcon, ExternalLink, FileSearch } from "lucide-react"
 import { cn } from "@/lib/utils"
+import AuditPanel from "@/components/audit-panel"
 
 // Helper to determine API Base URL
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
@@ -357,7 +358,10 @@ const ScrapedDataViewer: React.FC<ScrapedDataViewerProps> = ({ jsonData, onClose
     )
 }
 
+type AppTab = "scraper" | "audit"
+
 export default function Dashboard() {
+    const [activeTab, setActiveTab] = useState<AppTab>("scraper")
     const [url, setUrl] = useState("")
     const [maxDepth, setMaxDepth] = useState(1)
     const [logs, setLogs] = useState<string[]>([])
@@ -474,15 +478,8 @@ export default function Dashboard() {
             const res = await fetch(`${API_BASE_URL}/download`)
             if (res.ok) {
                 const text = await res.text()
-                // Parse line by line since log file has JSON per line
-                const lines = text.trim().split('\n').filter(Boolean)
-                const parsed = lines.map(line => {
-                    try {
-                        return JSON.parse(line)
-                    } catch {
-                        return { raw: line }
-                    }
-                })
+                // /download returns a JSON array — parse directly
+                const parsed = JSON.parse(text)
                 setJsonData(parsed)
                 setShowJsonViewer(true)
             }
@@ -549,8 +546,32 @@ export default function Dashboard() {
                 </div>
             </header>
 
-            <main className="container mx-auto px-4 max-w-7xl py-8 space-y-8">
-                <div className="grid lg:grid-cols-12 gap-8">
+            <main className="container mx-auto px-4 max-w-7xl py-8 space-y-6">
+                {/* Tab bar */}
+                <div className="flex border-b border-border">
+                    {([
+                        { id: "scraper" as AppTab, label: "Web Scraper", icon: Terminal },
+                        { id: "audit" as AppTab, label: "Sitemap Audit", icon: FileSearch },
+                    ]).map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={cn(
+                                "flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 -mb-px transition-colors",
+                                activeTab === tab.id
+                                    ? "border-foreground text-foreground"
+                                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground"
+                            )}
+                        >
+                            <tab.icon className="h-4 w-4" />
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+
+                {activeTab === "audit" && <AuditPanel />}
+
+                <div className={cn("grid lg:grid-cols-12 gap-8", activeTab !== "scraper" && "hidden")}>
                     {/* Left Column: Controls */}
                     <div className="lg:col-span-4 space-y-6">
                         <Card className="border-2 shadow-sm">
@@ -682,6 +703,7 @@ export default function Dashboard() {
                         </Card>
                     </div>
                 </div>
+                {/* end scraper tab */}
             </main>
 
             {/* JSON Viewer Modal with Tabs */}
