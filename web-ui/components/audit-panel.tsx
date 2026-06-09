@@ -241,13 +241,13 @@ const InsightsPanel: React.FC<{ insights: string[] }> = ({ insights }) => {
     if (!insights || insights.length === 0) return null
     return (
         <div className="rounded-lg border border-blue-200 dark:border-blue-400/30 bg-blue-50 dark:bg-blue-500/5 p-4 space-y-2">
-            <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300 flex items-center gap-2">
-                <Lightbulb className="h-4 w-4" />
+            <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Lightbulb className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                 Insights
             </h4>
             <ul className="space-y-2">
                 {insights.map((insight, i) => (
-                    <li key={i} className="flex items-start gap-2 text-xs text-gray-900 dark:text-blue-100">
+                    <li key={i} className="flex items-start gap-2 text-xs text-foreground">
                         <span className="shrink-0 mt-0.5 font-bold text-blue-600 dark:text-blue-400">›</span>
                         <span>{insight}</span>
                     </li>
@@ -637,7 +637,7 @@ export default function AuditPanel() {
                         {report.warnings.length > 0 && (
                             <div className="rounded-lg border border-amber-400/40 bg-amber-50 dark:bg-amber-500/5 px-4 py-3 space-y-1">
                                 {report.warnings.map((w, i) => (
-                                    <div key={i} className="flex items-start gap-2 text-xs text-amber-700 dark:text-amber-300">
+                                    <div key={i} className="flex items-start gap-2 text-xs text-foreground">
                                         <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                                         <span>{w}</span>
                                     </div>
