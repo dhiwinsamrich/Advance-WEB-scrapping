@@ -4,7 +4,7 @@ A modular, configurable, and scalable web scraper built with Python, Selenium, a
 
 ## Project Structure
 -   **`backend/`**: FastAPI server, Scraper logic, Dockerfile.
--   **`frontend/`**: Next.js Web Dashboard.
+-   **`web-ui/`**: Next.js Web Dashboard.
 
 ## Quick Start (Dashboard)
 
