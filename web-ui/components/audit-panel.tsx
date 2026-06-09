@@ -9,6 +9,7 @@ import {
     Play, Square, Globe, Download, Activity, Terminal,
     CheckCircle2, XCircle, ChevronDown, ChevronRight,
     AlertTriangle, FileSearch, Link2, ShieldCheck, Info,
+    Lightbulb, FileX2, Cpu,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -31,16 +32,49 @@ interface SitemapHygiene {
     non_200_entries: Record<string, number>
 }
 
+interface SiteIntelligence {
+    framework: string | null
+    spa_detected: boolean
+    has_noscript_fallback: boolean
+    noscript_link_count: number
+    homepage_html_available: boolean
+}
+
+interface OrphanDetail {
+    url: string
+    reason: string
+    status_code: number
+    final_url: string | null
+}
+
 interface AuditReport {
     root_url: string
     covered: string[]
-    missing_from_sitemap: string[]
-    orphaned_in_sitemap: string[]
+    missing_from_sitemap: string[]   // backward-compat: all missing
+    orphaned_in_sitemap: string[]    // normalized orphan URLs
+    // enriched
+    missing_pages: string[]
+    non_page_files: string[]
+    orphan_details: OrphanDetail[]
+    site_intelligence: SiteIntelligence | null
+    insights: string[]
     seo_issues: Record<string, string[]>
     hygiene: SitemapHygiene | null
     verdict: "PASS" | "FAIL"
     exit_code: number
     warnings: string[]
+}
+
+// ── Orphan reason metadata ────────────────────────────────────────────────────
+
+const REASON_META: Record<string, { label: string; color: string; bg: string }> = {
+    JS_RENDERED:   { label: "JS Rendered",   color: "text-blue-700 dark:text-blue-300",   bg: "bg-blue-100 dark:bg-blue-500/20 border-blue-300 dark:border-blue-400/30" },
+    NOT_FOUND:     { label: "404 Not Found", color: "text-rose-700 dark:text-rose-300",   bg: "bg-rose-100 dark:bg-rose-500/20 border-rose-300 dark:border-rose-400/30" },
+    REDIRECT:      { label: "Redirect",      color: "text-amber-700 dark:text-amber-300", bg: "bg-amber-100 dark:bg-amber-500/20 border-amber-300 dark:border-amber-400/30" },
+    SERVER_ERROR:  { label: "Server Error",  color: "text-red-700 dark:text-red-300",     bg: "bg-red-100 dark:bg-red-500/20 border-red-300 dark:border-red-400/30" },
+    ACCESS_DENIED: { label: "403/401",       color: "text-orange-700 dark:text-orange-300", bg: "bg-orange-100 dark:bg-orange-500/20 border-orange-300 dark:border-orange-400/30" },
+    FETCH_ERROR:   { label: "Fetch Error",   color: "text-zinc-600 dark:text-zinc-400",   bg: "bg-zinc-100 dark:bg-zinc-700/40 border-zinc-300 dark:border-zinc-600" },
+    NOT_LINKED:    { label: "Not Linked",    color: "text-purple-700 dark:text-purple-300", bg: "bg-purple-100 dark:bg-purple-500/20 border-purple-300 dark:border-purple-400/30" },
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -116,6 +150,65 @@ const ExpandableList: React.FC<{
     )
 }
 
+const OrphanList: React.FC<{
+    details: OrphanDetail[]
+    defaultOpen?: boolean
+}> = ({ details, defaultOpen = false }) => {
+    const [open, setOpen] = useState(defaultOpen)
+    if (details.length === 0) return null
+    return (
+        <div className="rounded-lg border border-border overflow-hidden">
+            <button
+                onClick={() => setOpen(!open)}
+                className="w-full flex items-center justify-between px-4 py-3 bg-muted hover:bg-muted/70 transition-colors text-left"
+            >
+                <span className="text-sm font-semibold text-rose-600 dark:text-rose-400">
+                    Orphaned in Sitemap (declared but unreachable)
+                    <span className="ml-2 font-mono text-xs bg-background text-foreground border border-border px-2 py-0.5 rounded-full">
+                        {details.length}
+                    </span>
+                </span>
+                {open ? (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                )}
+            </button>
+            {open && (
+                <div className="divide-y divide-border max-h-72 overflow-y-auto">
+                    {details.map((d, i) => {
+                        const meta = REASON_META[d.reason] ?? REASON_META.FETCH_ERROR
+                        return (
+                            <div key={i} className="flex items-center gap-3 px-4 py-2 hover:bg-muted/50">
+                                <span className={cn(
+                                    "shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded border",
+                                    meta.color, meta.bg,
+                                )}>
+                                    {meta.label}
+                                </span>
+                                <a
+                                    href={d.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 truncate flex-1"
+                                    title={d.url}
+                                >
+                                    {d.url}
+                                </a>
+                                {d.status_code > 0 && (
+                                    <span className="shrink-0 text-[10px] font-mono text-muted-foreground">
+                                        HTTP {d.status_code}
+                                    </span>
+                                )}
+                            </div>
+                        )
+                    })}
+                </div>
+            )}
+        </div>
+    )
+}
+
 const VerdictBadge: React.FC<{ verdict: "PASS" | "FAIL" }> = ({ verdict }) =>
     verdict === "PASS" ? (
         <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 dark:bg-emerald-400/10 border border-emerald-300 dark:border-emerald-400/30">
@@ -128,6 +221,41 @@ const VerdictBadge: React.FC<{ verdict: "PASS" | "FAIL" }> = ({ verdict }) =>
             <span className="text-rose-700 dark:text-rose-400 font-bold text-lg tracking-wide">FAIL</span>
         </div>
     )
+
+const FrameworkBadge: React.FC<{ si: SiteIntelligence }> = ({ si }) => {
+    if (!si.framework) return null
+    return (
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-blue-300 dark:border-blue-400/30 bg-blue-50 dark:bg-blue-500/10">
+            <Cpu className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+            <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">{si.framework}</span>
+            {si.spa_detected && (
+                <span className="text-[10px] font-bold bg-blue-200 dark:bg-blue-400/20 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded-full ml-1">
+                    SPA
+                </span>
+            )}
+        </div>
+    )
+}
+
+const InsightsPanel: React.FC<{ insights: string[] }> = ({ insights }) => {
+    if (!insights || insights.length === 0) return null
+    return (
+        <div className="rounded-lg border border-blue-200 dark:border-blue-400/30 bg-blue-50 dark:bg-blue-500/5 p-4 space-y-2">
+            <h4 className="text-sm font-semibold text-blue-700 dark:text-blue-300 flex items-center gap-2">
+                <Lightbulb className="h-4 w-4" />
+                Insights
+            </h4>
+            <ul className="space-y-2">
+                {insights.map((insight, i) => (
+                    <li key={i} className="flex items-start gap-2 text-xs text-blue-800 dark:text-blue-200">
+                        <span className="shrink-0 mt-0.5 font-bold text-blue-400 dark:text-blue-500">›</span>
+                        <span>{insight}</span>
+                    </li>
+                ))}
+            </ul>
+        </div>
+    )
+}
 
 const HygienePanel: React.FC<{ hygiene: SitemapHygiene }> = ({ hygiene }) => (
     <div className="rounded-lg border border-border p-4 space-y-2">
@@ -181,14 +309,12 @@ export default function AuditPanel() {
     const scrollRef = useRef<HTMLDivElement>(null)
     const wsRef = useRef<WebSocket | null>(null)
 
-    // Auto-scroll logs
     useEffect(() => {
         if (scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight
         }
     }, [logs])
 
-    // WebSocket lifecycle
     useEffect(() => {
         const connect = () => {
             const ws = new WebSocket(getAuditWsUrl())
@@ -202,12 +328,9 @@ export default function AuditPanel() {
                 })])
             }
             ws.onmessage = (e) => setLogs(prev => [...prev, e.data])
-            ws.onerror = () => {
-                setWsConnected(false)
-            }
+            ws.onerror = () => setWsConnected(false)
             ws.onclose = () => {
                 setWsConnected(false)
-                // Reconnect after 3s if page is still mounted
                 setTimeout(connect, 3000)
             }
         }
@@ -215,7 +338,6 @@ export default function AuditPanel() {
         return () => wsRef.current?.close()
     }, [])
 
-    // Status polling
     useEffect(() => {
         if (!isRunning) return
         const poll = async () => {
@@ -302,6 +424,13 @@ export default function AuditPanel() {
         try { return JSON.parse(l) }
         catch { return { message: l, level: "RAW", timestamp: new Date().toISOString() } }
     })
+
+    // Compute display values — fall back to legacy fields if enriched ones missing
+    const missingPages  = report?.missing_pages ?? report?.missing_from_sitemap ?? []
+    const nonPageFiles  = report?.non_page_files ?? []
+    const orphanDetails = report?.orphan_details ?? []
+    const insights      = report?.insights ?? []
+    const si            = report?.site_intelligence ?? null
 
     return (
         <div className="grid lg:grid-cols-12 gap-8">
@@ -475,11 +604,11 @@ export default function AuditPanel() {
                                 </span>
                                 <span className={cn(
                                     "shrink-0 w-[60px] font-bold",
-                                    log.level === "ERROR" && "text-red-500",
+                                    log.level === "ERROR"   && "text-red-500",
                                     log.level === "WARNING" && "text-amber-500",
-                                    log.level === "INFO" && "text-emerald-500",
-                                    log.level === "SYSTEM" && "text-blue-400",
-                                    !["ERROR", "WARNING", "INFO", "SYSTEM"].includes(log.level) && "text-zinc-500",
+                                    log.level === "INFO"    && "text-emerald-500",
+                                    log.level === "SYSTEM"  && "text-blue-400",
+                                    !["ERROR","WARNING","INFO","SYSTEM"].includes(log.level) && "text-zinc-500",
                                 )}>
                                     {log.level}
                                 </span>
@@ -492,14 +621,19 @@ export default function AuditPanel() {
                 {/* Report panel */}
                 {showReport && report && (
                     <div className="space-y-4">
-                        {/* Verdict + warnings */}
+
+                        {/* Verdict row + framework badge */}
                         <div className="flex items-center justify-between flex-wrap gap-3">
-                            <VerdictBadge verdict={report.verdict} />
-                            <span className="text-xs text-zinc-500 font-mono">
+                            <div className="flex items-center gap-3 flex-wrap">
+                                <VerdictBadge verdict={report.verdict} />
+                                {si && <FrameworkBadge si={si} />}
+                            </div>
+                            <span className="text-xs text-muted-foreground font-mono">
                                 {report.root_url}
                             </span>
                         </div>
 
+                        {/* Warnings */}
                         {report.warnings.length > 0 && (
                             <div className="rounded-lg border border-amber-400/40 bg-amber-50 dark:bg-amber-500/5 px-4 py-3 space-y-1">
                                 {report.warnings.map((w, i) => (
@@ -511,7 +645,10 @@ export default function AuditPanel() {
                             </div>
                         )}
 
-                        {/* Coverage stats */}
+                        {/* Auto-generated insights — top of report */}
+                        <InsightsPanel insights={insights} />
+
+                        {/* Coverage stats — use missing_pages count, not raw missing_from_sitemap */}
                         <div className="grid grid-cols-3 gap-3">
                             <StatCard
                                 label="Covered"
@@ -520,9 +657,9 @@ export default function AuditPanel() {
                                 icon={<CheckCircle2 className="h-6 w-6" />}
                             />
                             <StatCard
-                                label="Missing from Sitemap"
-                                value={report.missing_from_sitemap.length}
-                                color="amber"
+                                label="Missing Pages"
+                                value={missingPages.length}
+                                color={missingPages.length > 0 ? "amber" : "zinc"}
                                 icon={<AlertTriangle className="h-6 w-6" />}
                             />
                             <StatCard
@@ -533,19 +670,33 @@ export default function AuditPanel() {
                             />
                         </div>
 
-                        {/* Gap tables */}
+                        {/* Coverage gap tables */}
                         <div className="space-y-2">
+                            {/* Missing pages (real pages) */}
                             <ExpandableList
-                                title="Missing from Sitemap"
-                                items={report.missing_from_sitemap}
-                                colorClass="text-amber-400"
-                                defaultOpen={report.missing_from_sitemap.length > 0}
+                                title="Missing Pages from Sitemap"
+                                items={missingPages}
+                                colorClass="text-amber-600 dark:text-amber-400"
+                                defaultOpen={missingPages.length > 0}
                             />
-                            <ExpandableList
-                                title="Orphaned in Sitemap (non-200 / unreachable)"
-                                items={report.orphaned_in_sitemap}
-                                colorClass="text-rose-400"
-                                defaultOpen={report.orphaned_in_sitemap.length > 0}
+
+                            {/* Non-page files — shown separately with lower severity */}
+                            {nonPageFiles.length > 0 && (
+                                <div className="rounded-lg border border-border overflow-hidden opacity-70">
+                                    <div className="flex items-center gap-2 px-4 py-3 bg-muted text-xs text-muted-foreground">
+                                        <FileX2 className="h-3.5 w-3.5 shrink-0" />
+                                        <span>
+                                            <span className="font-semibold text-foreground">{nonPageFiles.length}</span>{" "}
+                                            non-page file(s) found by crawler — ignored (not expected in sitemap)
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Orphan list with reason badges */}
+                            <OrphanList
+                                details={orphanDetails}
+                                defaultOpen={orphanDetails.length > 0}
                             />
                         </div>
 
@@ -561,7 +712,7 @@ export default function AuditPanel() {
                                         key={key}
                                         title={key.replace(/_/g, " ")}
                                         items={urls}
-                                        colorClass="text-purple-400"
+                                        colorClass="text-purple-600 dark:text-purple-400"
                                         defaultOpen
                                     />
                                 ))}
