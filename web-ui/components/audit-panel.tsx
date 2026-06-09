@@ -657,7 +657,7 @@ export default function AuditPanel() {
                                 icon={<CheckCircle2 className="h-6 w-6" />}
                             />
                             <StatCard
-                                label="Missing Pages"
+                                label="Crawled, Not in Sitemap"
                                 value={missingPages.length}
                                 color={missingPages.length > 0 ? "amber" : "zinc"}
                                 icon={<AlertTriangle className="h-6 w-6" />}
