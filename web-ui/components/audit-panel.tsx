@@ -52,10 +52,10 @@ const StatCard: React.FC<{
     icon: React.ReactNode
 }> = ({ label, value, color, icon }) => {
     const colorMap = {
-        emerald: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20",
-        amber: "text-amber-400 bg-amber-400/10 border-amber-400/20",
-        rose: "text-rose-400 bg-rose-400/10 border-rose-400/20",
-        zinc: "text-zinc-400 bg-zinc-400/10 border-zinc-400/20",
+        emerald: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-400/10 border-emerald-200 dark:border-emerald-400/20",
+        amber: "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-400/10 border-amber-200 dark:border-amber-400/20",
+        rose: "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-400/10 border-rose-200 dark:border-rose-400/20",
+        zinc: "text-foreground bg-muted border-border",
     }
     return (
         <div className={cn("rounded-lg border p-4 flex items-center gap-4", colorMap[color])}>
@@ -77,33 +77,33 @@ const ExpandableList: React.FC<{
     const [open, setOpen] = useState(defaultOpen)
     if (items.length === 0) return null
     return (
-        <div className="rounded-lg border border-zinc-700 overflow-hidden">
+        <div className="rounded-lg border border-border overflow-hidden">
             <button
                 onClick={() => setOpen(!open)}
-                className="w-full flex items-center justify-between px-4 py-3 bg-zinc-800/50 hover:bg-zinc-800 transition-colors text-left"
+                className="w-full flex items-center justify-between px-4 py-3 bg-muted hover:bg-muted/70 transition-colors text-left"
             >
                 <span className={cn("text-sm font-semibold", colorClass)}>
                     {title}
-                    <span className="ml-2 font-mono text-xs bg-zinc-700 text-zinc-300 px-2 py-0.5 rounded-full">
+                    <span className="ml-2 font-mono text-xs bg-background text-foreground border border-border px-2 py-0.5 rounded-full">
                         {items.length}
                     </span>
                 </span>
                 {open ? (
-                    <ChevronDown className="h-4 w-4 text-zinc-500" />
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
                 ) : (
-                    <ChevronRight className="h-4 w-4 text-zinc-500" />
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
                 )}
             </button>
             {open && (
-                <div className="divide-y divide-zinc-700/50 max-h-64 overflow-y-auto">
+                <div className="divide-y divide-border max-h-64 overflow-y-auto">
                     {items.map((item, i) => (
-                        <div key={i} className="flex items-center gap-3 px-4 py-2 hover:bg-zinc-800/30 group">
-                            <Link2 className="h-3 w-3 text-zinc-600 shrink-0" />
+                        <div key={i} className="flex items-center gap-3 px-4 py-2 hover:bg-muted/50 group">
+                            <Link2 className="h-3 w-3 text-muted-foreground shrink-0" />
                             <a
                                 href={item}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-xs text-blue-400 hover:text-blue-300 truncate flex-1"
+                                className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 truncate flex-1"
                                 title={item}
                             >
                                 {item}
@@ -118,21 +118,21 @@ const ExpandableList: React.FC<{
 
 const VerdictBadge: React.FC<{ verdict: "PASS" | "FAIL" }> = ({ verdict }) =>
     verdict === "PASS" ? (
-        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-400/10 border border-emerald-400/30">
-            <CheckCircle2 className="h-5 w-5 text-emerald-400" />
-            <span className="text-emerald-400 font-bold text-lg tracking-wide">PASS</span>
+        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 dark:bg-emerald-400/10 border border-emerald-300 dark:border-emerald-400/30">
+            <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            <span className="text-emerald-700 dark:text-emerald-400 font-bold text-lg tracking-wide">PASS</span>
         </div>
     ) : (
-        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-rose-400/10 border border-rose-400/30">
-            <XCircle className="h-5 w-5 text-rose-400" />
-            <span className="text-rose-400 font-bold text-lg tracking-wide">FAIL</span>
+        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-rose-50 dark:bg-rose-400/10 border border-rose-300 dark:border-rose-400/30">
+            <XCircle className="h-5 w-5 text-rose-600 dark:text-rose-400" />
+            <span className="text-rose-700 dark:text-rose-400 font-bold text-lg tracking-wide">FAIL</span>
         </div>
     )
 
 const HygienePanel: React.FC<{ hygiene: SitemapHygiene }> = ({ hygiene }) => (
-    <div className="rounded-lg border border-zinc-700 p-4 space-y-2">
-        <h4 className="text-sm font-semibold text-zinc-300 mb-3 flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-zinc-400" />
+    <div className="rounded-lg border border-border p-4 space-y-2">
+        <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-muted-foreground" />
             Sitemap Hygiene
         </h4>
         <div className="grid grid-cols-2 gap-2 text-xs">
@@ -144,13 +144,13 @@ const HygienePanel: React.FC<{ hygiene: SitemapHygiene }> = ({ hygiene }) => (
                 ["Redirect entries", hygiene.redirect_entries.length],
                 ["Over 50k limit", hygiene.over_url_limit ? "Yes ⚠" : "No"],
             ].map(([label, val]) => (
-                <div key={String(label)} className="flex justify-between bg-zinc-800/50 rounded px-3 py-1.5">
-                    <span className="text-zinc-500">{label}</span>
+                <div key={String(label)} className="flex justify-between items-center bg-muted rounded px-3 py-2">
+                    <span className="text-muted-foreground">{label}</span>
                     <span className={cn(
-                        "font-mono font-medium",
+                        "font-mono font-semibold text-sm",
                         (val === "Yes ⚠" || (typeof val === "number" && val > 0))
-                            ? "text-amber-400"
-                            : "text-zinc-300"
+                            ? "text-amber-500 dark:text-amber-400"
+                            : "text-foreground"
                     )}>
                         {String(val)}
                     </span>
@@ -501,9 +501,9 @@ export default function AuditPanel() {
                         </div>
 
                         {report.warnings.length > 0 && (
-                            <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 space-y-1">
+                            <div className="rounded-lg border border-amber-400/40 bg-amber-50 dark:bg-amber-500/5 px-4 py-3 space-y-1">
                                 {report.warnings.map((w, i) => (
-                                    <div key={i} className="flex items-start gap-2 text-xs text-amber-300">
+                                    <div key={i} className="flex items-start gap-2 text-xs text-amber-700 dark:text-amber-300">
                                         <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                                         <span>{w}</span>
                                     </div>
@@ -552,8 +552,8 @@ export default function AuditPanel() {
                         {/* SEO issues */}
                         {Object.keys(report.seo_issues).length > 0 && (
                             <div className="space-y-2">
-                                <h4 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
-                                    <Info className="h-4 w-4 text-zinc-400" />
+                                <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                                    <Info className="h-4 w-4 text-muted-foreground" />
                                     SEO Issues
                                 </h4>
                                 {Object.entries(report.seo_issues).map(([key, urls]) => (
