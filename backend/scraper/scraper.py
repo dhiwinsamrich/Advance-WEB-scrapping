@@ -16,16 +16,15 @@ logger = get_logger("scraper")
 error_logger = get_logger("errors")
 
 class Scraper:
-    def __init__(self, driver_manager=None):
-        self.session = requests.Session()
-        self.driver = None 
-        # driver is passed/managed by Crawler usually, or we init here if needed.
-        # For session reuse, we'll accept an existing driver instance.
-
-        self.session.headers.update({
-            "User-Agent": get_random_user_agent(),
-            "Accept-Language": "en-US,en;q=0.9",
-        })
+    def __init__(self, session: requests.Session = None):
+        if session is not None:
+            self.session = session
+        else:
+            self.session = requests.Session()
+            self.session.headers.update({
+                "User-Agent": get_random_user_agent(),
+                "Accept-Language": "en-US,en;q=0.9",
+            })
 
     def scrape_url(self, url, driver=None):
         """
@@ -46,9 +45,9 @@ class Scraper:
             response = self.session.get(url, timeout=Config.PAGE_LOAD_TIMEOUT)
             
             if response.status_code == 403:
-                error_logger.warning(f"403 Forbidden on {url}. Possible bot protection.")
-                # Could try Selenium here as fallback if 403 was due to headers/cookies
-            
+                error_logger.warning(f"403 Forbidden on {url} — returning None so caller can retry with Selenium")
+                return None, []
+
             if response.status_code != 200:
                 error_logger.error(f"Failed to fetch {url}: Status {response.status_code}")
                 return None, []
