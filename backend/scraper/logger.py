@@ -48,7 +48,8 @@ def setup_loggers():
     loggers = {
         "crawler": "crawler.log",
         "scraper": "scraper.log",
-        "errors": "errors.log"
+        "errors": "errors.log",
+        "auditor": "auditor.log",
     }
     
     LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
